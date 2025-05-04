@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.21.0/dist/sweetalert2.min.css"
+    integrity="sha256-Hr+pC4Itl2fpZpbgDovrP2OKWz72NVCWLXGRRJg/mAo=" crossorigin="anonymous">
+  <style>
+    body {
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      height: 100vh;
+      position: fixed;
+      width: 50% !important;
+      top: 56px;
+      left: 0;
+      background-color: #f8f9fa;
+      padding-top: 1rem;
+      border-right: 1px solid #dee2e6;
+    }
+
+    .content {
+      margin-left: 0px;
+      margin-top: 56px;
+      padding: 1.5rem;
+    }
+
+    @media (min-width: 992px) {
+      .sidebar {
+        position: fixed;
+        top: 56px;
+        bottom: 0;
+        width: 220px !important;
+        padding-top: 1rem;
+      }
+
+      .content {
+        margin-left: 220px;
+        margin-top: 56px;
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">Admin Panel</a>
+        <button class="btn btn-outline-light me-2 d-lg-none" type="button" data-bs-toggle="offcanvas"
+          data-bs-target="#sidebarOffcanvas">
+          ☰
+        </button>
+        <div class="ms-auto">
+          <button class="btn btn-outline-light" @click="logout">Logout</button>
+        </div>
+      </div>
+    </nav>
+
+
+    <!-- Sidebar -->
+    <div class="offcanvas-lg offcanvas-start sidebar" tabindex="-1" id="sidebarOffcanvas">
+      <div class="offcanvas-header d-lg-none">
+        <h5 class="offcanvas-title">Menu</h5>
+      </div>
+      <div class="offcanvas-body p-0">
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link" href="#" @click="currentPage = 'orders'" data-bs-dismiss="offcanvas">📦 Orders</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" @click="currentPage = 'products'" data-bs-dismiss="offcanvas">📦 Products</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" @click="currentPage = 'users'" data-bs-dismiss="offcanvas">👤 Users</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+
+      <!-- Users Table -->
+      <div v-if="currentPage === 'users'">
+        <div v-if="loading">Loading...</div>
+        <div v-else>
+          <h2>Data Users</h2>
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Gender</th>
+                <th>Address</th>
+                <th>Date of Birth</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(user, index) in users" :key="user.id">
+                <td>{{ index + 1 + (currentPageNumber - 1) * limit }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.phone }}</td>
+                <td>{{ user.gender }}</td>
+                <td>{{ user.address }}</td>
+                <td>{{ user.date_of_birth }}</td>
+                <td>
+                  <span :class="user.is_active ? 'text-success' : 'text-danger'">
+                    {{ user.is_active ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-primary me-2" @click="editUser(user.id)">Edit</button>
+                  <button class="btn btn-sm btn-danger" @click="deleteUser(user.id)">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+
+
+          <!-- Pagination -->
+          <nav>
+            <ul class="pagination">
+              <li class="page-item" :class="{ disabled: currentPageNumber === 1 }">
+                <a class="page-link" href="#" @click.prevent="changePage(currentPageNumber - 1)">Previous</a>
+              </li>
+              <li class="page-item" v-for="page in totalPages" :key="page"
+                :class="{ active: page === currentPageNumber }">
+                <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
+              </li>
+              <li class="page-item" :class="{ disabled: currentPageNumber === totalPages }">
+                <a class="page-link" href="#" @click.prevent="changePage(currentPageNumber + 1)">Next</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+
+        <!-- Modal Edit -->
+        <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form @submit.prevent="saveUser">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="editModalLabel">Edit User</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input v-model="editedUser.name" type="text" class="form-control" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input v-model="editedUser.email" type="email" class="form-control" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Phone</label>
+                    <input v-model="editedUser.phone" type="text" class="form-control">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Address</label>
+                    <textarea v-model="editedUser.address" class="form-control"></textarea>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Gender</label>
+                    <select v-model="editedUser.gender" class="form-select">
+                      <option disabled value="">Select gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Date of Birth</label>
+                    <input v-model="editedUser.date_of_birth" type="date" class="form-control">
+                  </div>
+                  <div class="form-check mb-3">
+                    <input v-model="editedUser.is_active" class="form-check-input" type="checkbox" id="isActive">
+                    <label class="form-check-label" for="isActive">
+                      Active
+                    </label>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+
+      <!-- Product Section -->
+      <div v-else-if="currentPage === 'products'">
+        <h2>Data Product</h2>
+        <div class="mb-3 text-end">
+          <button class="btn btn-success" @click="openAddProductModal">+ Add Product</button>
+        </div>
+
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Photo</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Price</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(product, index) in products" :key="product.id">
+              <td>{{ index + 1 + (productPageNumber - 1) * productLimit }}</td>
+              <td>
+                <img v-if="product.photo" :src="baseUrlfile + product.photo" alt="photo" width="60" height="60" />
+                <span v-else>No photo</span>
+              </td>
+              <td>{{ product.name }}</td>
+              <td>
+                {{ product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description }}
+              </td>
+              <td>Rp {{ product.price.toLocaleString() }}</td>
+              <td>
+                <button class="btn btn-sm btn-info mb-2 me-2" @click="openVariantModal(product.id)">Varian</button>
+                <button class="btn btn-sm btn-warning mb-2 me-2" @click="openEditProductModal(product)">Edit</button>
+                <button class="btn btn-sm btn-danger mb-2" @click="deleteProduct(product.id)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <nav>
+          <ul class="pagination">
+            <li class="page-item" :class="{ disabled: currentPageNumber === 1 }">
+              <a class="page-link" href="#" @click.prevent="changePage(currentPageNumber - 1)">Previous</a>
+            </li>
+            <li class="page-item" v-for="page in totalPages" :key="page"
+              :class="{ active: page === currentPageNumber }">
+              <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" :class="{ disabled: currentPageNumber === totalPages }">
+              <a class="page-link" href="#" @click.prevent="changePage(currentPageNumber + 1)">Next</a>
+            </li>
+          </ul>
+        </nav>
+
+        <!-- Modal Edit Product -->
+        <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel"
+          aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form @submit.prevent="updateProduct" enctype="multipart/form-data">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input v-model="editProduct.name" type="text" class="form-control" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea v-model="editProduct.description" class="form-control" rows="5"></textarea>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Price</label>
+                    <input v-model.number="editProduct.price" type="number" class="form-control" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Photo</label>
+                    <input type="file" @change="handleEditPhotoUpload" class="form-control" accept="image/*">
+                    <small class="text-muted">Kosongkan jika tidak ingin mengganti foto</small>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Modal Add Product -->
+        <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
+          aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form @submit.prevent="addProduct" enctype="multipart/form-data">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input v-model="newProduct.name" type="text" class="form-control" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea v-model="newProduct.description" class="form-control" rows="5"></textarea>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Price</label>
+                    <input v-model.number="newProduct.price" type="number" class="form-control" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Photo</label>
+                    <input ref="addPhotoInput" type="file" @change="handlePhotoUpload" class="form-control"
+                      accept="image/*">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="submit" class="btn btn-primary">Add Product</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Varian -->
+        <div class="modal fade" id="variantModal" tabindex="-1" aria-labelledby="variantModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <form @submit.prevent="submitVariant">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="variantModalLabel">Manage Varian</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+
+                  <!-- Form Tambah/Edit -->
+                  <div class="row g-2 mb-4">
+                    <div class="col-md-4">
+                      <input type="text" class="form-control" placeholder="Ukuran (cth: M)"
+                        v-model="variantForm.product_size" required>
+                    </div>
+                    <div class="col-md-4">
+                      <input type="number" class="form-control" placeholder="Jumlah Stok"
+                        v-model="variantForm.product_qty" required>
+                    </div>
+                    <div class="col-md-4">
+                      <button type="submit"
+                        class="btn btn-primary w-100">{{ variantForm.id ? 'Update' : 'Tambah' }}</button>
+                    </div>
+                  </div>
+
+                  <!-- Daftar Varian -->
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Ukuran</th>
+                        <th>Stok</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="variant in variants" :key="variant.id">
+                        <td>{{ variant.product_size }}</td>
+                        <td>{{ variant.product_qty }}</td>
+                        <td>
+                          <button type="button" class="btn btn-sm btn-warning me-2"
+                            @click="editVariant(variant)">Edit</button>
+                          <button type="button" class="btn btn-sm btn-danger"
+                            @click="deleteVariant(variant.id)">Hapus</button>
+                        </td>
+                      </tr>
+                      <tr v-if="variants.length === 0">
+                        <td colspan="3" class="text-center">Belum ada varian</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+
+      <!-- Orders Table -->
+      <div v-if="currentPage === 'orders'">
+        <div v-if="loading">Loading...</div>
+        <div v-else>
+          <h2>Data Orders</h2>
+          <!-- Table to display orders -->
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Invoice ID</th>
+                <th>Status Shipping</th>
+                <th>Total Price</th>
+                <th>Created At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(invoice, index) in invoices" :key="invoice.id">
+                <td>{{ (currentPageNumber - 1) * limit + index + 1 }}</td>
+                <td>{{ invoice.recipt }}</td>
+                <td>{{ invoice.status_shipping }}</td>
+                <td>{{ formatPrice(invoice.total_price) }}</td>
+                <td>{{ formatDate(invoice.created_at) }}</td>
+                <td>
+                  <button class="btn btn-primary btn-sm me-2 mb-2" @click="showDetails(invoice)">Detail Product</button>
+                  <a :href="`${baseUrl}invoice/pdf/${invoice.id}`" target="_blank"
+                    class="btn btn-danger btn-sm me-2 mb-2">
+                    Cetak PDF
+                  </a>
+                  <button @click="updateShippingStatus(invoice.id)" class="btn btn-success btn-sm me-2 mb-2"
+                    v-if="invoice.status_shipping != 'Dalam Pengiriman' ">
+                    Kirim Sekarang
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <nav>
+            <ul class="pagination">
+              <li class="page-item" :class="{ disabled: currentPageNumber === 1 }">
+                <a class="page-link" href="#" @click.prevent="changePageOrder(currentPageNumber - 1)">Previous</a>
+              </li>
+              <li class="page-item" v-for="page in totalPages" :key="page"
+                :class="{ active: page === currentPageNumber }">
+                <a class="page-link" href="#" @click.prevent="changePageOrder(page)">{{ page }}</a>
+              </li>
+              <li class="page-item" :class="{ disabled: currentPageNumber === totalPages }">
+                <a class="page-link" href="#" @click.prevent="changePageOrder(currentPageNumber + 1)">Next</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+
+      <!-- Detail Product Modal -->
+      <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel"
+        aria-hidden="true" ref="productModal">
+        <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="productModalLabel">Detail Product - {{ selectedInvoice.recipt }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <h4>List Product</h4>
+              <ul class="list-group">
+                <li class="list-group-item" v-for="order in selectedInvoice.orders" :key="order.id">
+                  <div><strong>Product Name:</strong> {{ order.product_name }}</div>
+                  <div><strong>Size:</strong> {{ order.product_size }}</div>
+                  <div><strong>Quantity:</strong> {{ order.product_qty }}</div>
+                  <div><strong>Price:</strong> {{ formatPrice(order.product_price) }}</div>
+                </li>
+              </ul>
+              <h4>Address</h4>
+              <label><b>{{ selectedInvoice.user.name }} - {{ selectedInvoice.user.phone }}</b></label>
+              <br>
+              <label>{{ selectedInvoice.user.address }}</label>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.21.0/dist/sweetalert2.all.min.js"
+    integrity="sha256-TU2eIihLYclo7k5+qmqLlo4q4A8/R0TC5sfcvbzDDFI=" crossorigin="anonymous"></script>
+  <script>
+    const {
+      createApp
+    } = Vue;
+
+    createApp({
+      data() {
+        return {
+          baseUrlfile: 'http://localhost:5000/uploads/',
+          baseUrl: 'http://localhost:5000/api/',
+          currentPage: 'orders',
+          users: [],
+          loading: false,
+          currentPageNumber: 1,
+          limit: 10,
+          totalPages: 1,
+          editedUser: {
+            id: null,
+            name: '',
+            email: '',
+            phone: '',
+            address: '',
+            gender: '',
+            date_of_birth: '',
+            is_active: false
+          },
+          products: [],
+          editProduct: {
+            id: null,
+            name: '',
+            description: '',
+            price: '',
+            photoFile: null
+          },
+          newProduct: {
+            name: '',
+            description: '',
+            price: '',
+            photoFile: null // akan menyimpan file dari input
+          },
+          productPageNumber: 1,
+          productLimit: 10,
+          variantForm: {
+            id: null,
+            product_id: null,
+            product_size: '',
+            product_qty: ''
+          },
+          variants: [],
+          productId: null,
+          invoices: [], // This will hold your order data
+          currentPageNumber: 1,
+          limit: 10,
+          selectedInvoice: {
+            recipt: '',
+            orders: [],
+            user: {}
+          }
+        };
+      },
+      methods: {
+        fetchUsers() {
+          this.loading = true;
+          axios.get(`http://localhost:5000/api/users?search=&page=${this.currentPageNumber}&limit=${this.limit}`)
+            .then(response => {
+              this.users = response.data.data;
+              this.totalPages = Math.ceil(response.data.total / this.limit);
+              this.loading = false;
+            })
+            .catch(error => {
+              console.error(error);
+              this.loading = false;
+            });
+        },
+        changePage(page) {
+          if (page >= 1 && page <= this.totalPages) {
+            this.currentPageNumber = page;
+            this.fetchUsers();
+          }
+        },
+        editUser(id) {
+          const user = this.users.find(u => u.id === id);
+          if (user) {
+            this.editedUser = {
+              ...user
+            };
+            const modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+          }
+        },
+
+        saveUser() {
+          axios.put(`http://localhost:5000/api/users/${this.editedUser.id}`, this.editedUser)
+            .then(() => {
+              Swal.fire({
+                title: "Updated!",
+                text: 'Berhasil mengupdate user',
+                icon: "success"
+              });
+              this.fetchUsers();
+              const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+              modal.hide();
+            })
+            .catch(err => {
+              console.error(err);
+              alert('Failed to update user');
+            });
+        },
+
+        deleteUser(id) {
+          Swal.fire({
+            title: "Apakah anda yakin?",
+            text: "Yakin ingin menghapus user ini?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Ya"
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              axios.delete(`http://localhost:5000/api/users/${id}`)
+                .then(() => {
+                  Swal.fire({
+                    title: "Deleted!",
+                    text: 'Berhasil menghapus user',
+                    icon: "success"
+                  });
+                  this.fetchUsers(); // Refresh data
+                })
+                .catch(error => {
+                  console.error(error);
+                  alert('Gagal menghapus user');
+                });
+
+            }
+          });
+        },
+
+        ///Product
+        fetchProducts() {
+          axios.get(`http://localhost:5000/api/products?page=${this.productPageNumber}&limit=${this.productLimit}`)
+            .then(res => {
+              this.products = res.data.data;
+              this.totalPages = Math.ceil(res.data.total / this.limit);
+              this.loading = false;
+            })
+            .catch(err => console.error(err));
+        },
+
+        openEditProductModal(product) {
+          this.editProduct = {
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            photoFile: null
+          };
+          const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+          modal.show();
+        },
+
+        handleEditPhotoUpload(event) {
+          this.editProduct.photoFile = event.target.files[0];
+        },
+
+        updateProduct() {
+          const formData = new FormData();
+          formData.append('name', this.editProduct.name);
+          formData.append('description', this.editProduct.description);
+          formData.append('price', this.editProduct.price);
+          if (this.editProduct.photoFile) {
+            formData.append('photo', this.editProduct.photoFile);
+          }
+
+          axios.put(`http://localhost:5000/api/products/${this.editProduct.id}`, formData, {
+              headers: {
+                'Content-Type': 'multipart/form-data'
+              }
+            })
+            .then(() => {
+              Swal.fire({
+                title: "Updated!",
+                text: 'Berhasil mengedit product',
+                icon: "success"
+              });
+              this.fetchProducts();
+              const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+              modal.hide();
+            })
+            .catch(error => {
+              console.error(error);
+              alert('Failed to update product');
+            });
+        },
+
+
+        deleteProduct(id) {
+          Swal.fire({
+            title: "Apakah anda yakin?",
+            text: "Yakin ingin menghapus product ini?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Ya"
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              axios.delete(`http://localhost:5000/api/products/${id}`)
+                .then(() => {
+                  this.fetchProducts();
+                  Swal.fire({
+                    title: "Deleted!",
+                    text: 'Berhasil menghapus product',
+                    icon: "success"
+                  });
+                })
+                .catch(err => console.error(err));
+            }
+          });
+
+        },
+
+        openAddProductModal() {
+          this.newProduct = {
+            name: '',
+            description: '',
+            price: '',
+            photoFile: null
+          };
+          const modal = new bootstrap.Modal(document.getElementById('addProductModal'));
+          modal.show();
+        },
+
+        handlePhotoUpload(event) {
+          this.newProduct.photoFile = event.target.files[0];
+        },
+
+        addProduct() {
+          const formData = new FormData();
+          formData.append('name', this.newProduct.name);
+          formData.append('description', this.newProduct.description);
+          formData.append('price', this.newProduct.price);
+          if (this.newProduct.photoFile) {
+            formData.append('photo', this.newProduct.photoFile);
+          }
+
+          axios.post('http://localhost:5000/api/products', formData, {
+              headers: {
+                'Content-Type': 'multipart/form-data'
+              }
+            })
+            .then(() => {
+              Swal.fire({
+                title: "Added!",
+                text: 'Berhasil menambah product',
+                icon: "success"
+              });
+              this.fetchProducts();
+              const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+              modal.hide();
+            })
+            .catch(error => {
+              console.error(error);
+              alert('Failed to add product');
+            });
+        },
+
+        openVariantModal(productId) {
+          this.productId = productId;
+          this.fetchVariants(productId);
+          const modal = new bootstrap.Modal(document.getElementById('variantModal'));
+          modal.show();
+        },
+
+        fetchVariants(productId) {
+          axios.get(`http://localhost:5000/api/productsize?search=${productId}&page=1&limit=100`)
+            .then(res => {
+              this.variants = res.data.data || [];
+            });
+        },
+
+        submitVariant() {
+          const url = this.variantForm.id ?
+            `http://localhost:5000/api/productssize/${this.variantForm.id}` :
+            'http://localhost:5000/api/productssize';
+
+          const method = this.variantForm.id ? 'put' : 'post';
+
+          axios({
+              method,
+              url,
+              data: {
+                product_id: this.productId,
+                product_size: this.variantForm.product_size,
+                product_qty: this.variantForm.product_qty
+              }
+            })
+            .then(() => {
+              this.fetchVariants(this.productId);
+              this.variantForm = {
+                id: null,
+                product_id: this.variantForm.product_id,
+                product_size: '',
+                product_qty: ''
+              };
+            })
+            .catch(err => alert('Gagal menyimpan varian'));
+        },
+
+        editVariant(variant) {
+          this.variantForm = {
+            id: variant.id,
+            product_id: variant.product_id,
+            product_size: variant.product_size,
+            product_qty: variant.product_qty
+          };
+          console.log(this.variantForm);
+        },
+
+        deleteVariant(id) {
+          Swal.fire({
+            title: "Apakah anda yakin?",
+            text: "Yakin ingin menghapus varian ini?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Ya"
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              axios.delete(`http://localhost:5000/api/productssize/${id}`)
+                .then(() => {
+                  this.fetchVariants(this.productId);
+                  Swal.fire({
+                    title: "Deleted!",
+                    text: 'Berhasil menghapus varian',
+                    icon: "success"
+                  });
+
+                })
+                .catch(() => alert('Gagal menghapus varian'));
+
+            }
+          });
+
+        },
+
+
+        logout() {
+          // Contoh: hapus token & redirect
+          sessionStorage.removeItem('token');
+          alert('Logged out!');
+          window.location.href = '/loginadmin.html'; // arahkan ke halaman login jika ada
+        },
+
+
+        // Function to fetch orders data
+        fetchOrders() {
+          this.loading = true;
+          axios.get(`http://localhost:5000/api/orders?page=${this.currentPageNumber}&limit=${this.limit}`)
+            .then(res => {
+              const data = res.data;
+              this.invoices = data.data;
+              this.totalPages = data.totalPages;
+              this.loading = false;
+            })
+            .catch(err => console.error(err));
+
+        },
+        // Change page method for pagination
+        changePageOrder(pageNumber) {
+          if (pageNumber < 1 || pageNumber > this.totalPages) return;
+          this.currentPageNumber = pageNumber;
+          this.fetchOrders(); // Re-fetch orders for the new page
+        },
+        // Utility to format date if needed
+        formatDate(dateString) {
+          const date = new Date(dateString);
+          return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+        },
+        formatPrice(price) {
+          return 'Rp. ' + Number(price).toLocaleString('id-ID', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+          });
+        },
+        showDetails(invoice) {
+          this.selectedInvoice = invoice;
+          const modal = new bootstrap.Modal(this.$refs.productModal);
+          modal.show();
+        },
+        async updateShippingStatus(invoiceId) {
+          Swal.fire({
+            title: "Apakah anda yakin?",
+            text: "Ubah status pengiriman, tidak bisa dikembalikan!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Ya"
+          }).then(async (result) => {
+            if (result.isConfirmed) {
+              try {
+                const response = await axios.put(`${this.baseUrl}invoices/${invoiceId}/shipping-status`, {
+                  status_shipping: 'Dalam Pengiriman'
+                });
+                Swal.fire({
+                  title: "Updated!",
+                  text: response.data.message,
+                  icon: "success"
+                });
+                // Optional: refresh data
+                this.fetchOrders();
+              } catch (error) {
+                console.error('Gagal update status:', error);
+                alert('Gagal mengubah status');
+              }
+
+            }
+          });
+
+        }
+
+
+
+      },
+      watch: {
+        currentPage(newVal) {
+          if (newVal === 'users') {
+            this.fetchUsers();
+          } else if (newVal === 'products') {
+            this.fetchProducts();
+          } else {
+            this.fetchOrders();
+          }
+        }
+      },
+
+      mounted() {
+        var token = sessionStorage.getItem('token');
+        console.log(token);
+
+        if (token) {
+          if (this.currentPage === 'users') {
+            this.fetchUsers();
+          } else if (this.currentPage === 'Products') {
+            this.fetchProducts();
+          } else {
+            this.fetchOrders();
+          }
+        } else {
+          alert('Your are not login!');
+          window.location.href = '/loginadmin.html'; // arahkan ke halaman login jika ada
+        }
+
+      }
+    }).mount('#app');
+  </script>
+</body>
+
+</html>
