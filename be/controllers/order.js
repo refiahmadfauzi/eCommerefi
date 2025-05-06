@@ -221,12 +221,12 @@ exports.downloadInvoicePDF = async (req, res) => {
     });
 
     doc.moveTo(50, positionY).lineTo(550, positionY).stroke();
-
+    var jml = invoice.total_price + invoice.shipping_price;
     // Total
     doc.font('Helvetica-Bold');
     doc.text(`Subtotal: Rp ${totalHarga.toLocaleString()}`, 350, positionY + 10);
     doc.text(`Ongkir: Rp ${invoice.shipping_price.toLocaleString()}`, 350, positionY + 30);
-    doc.text(`Total: Rp ${invoice.total_price.toLocaleString()}`, 350, positionY + 50);
+    doc.text(`Total: Rp ${jml.toLocaleString()}`, 350, positionY + 50);
     doc.end();
 
   } catch (err) {
