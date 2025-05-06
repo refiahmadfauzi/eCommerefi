@@ -17,14 +17,14 @@
 
         <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
             <div class="container">
-                <a class="navbar-brand fw-bold" href="/">MyShop</a>
+                <a class="navbar-brand fw-bold" href="index.html">MyShop</a>
                 <div v-if="user.name" class="dropdown ms-auto">
                     <button class="btn cart my-2 dropdown-toggle d-flex align-items-center" type="button"
                         id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         Hallo, {{ user.name }}
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item" href="/profile.html">Profile</a></li>
+                        <li><a class="dropdown-item" href="profile.html">Profile</a></li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
@@ -34,8 +34,8 @@
 
                 <div v-else>
                     <div class="ms-auto d-flex gap-2">
-                        <a href="/login.html" class="btn btn-outline-primary btn-sm">Login</a>
-                        <a href="/login.html" class="btn btn-primary btn-sm">Register</a>
+                        <a href="login.html" class="btn btn-outline-primary btn-sm">Login</a>
+                        <a href="login.html" class="btn btn-primary btn-sm">Register</a>
                     </div>
                 </div>
 
