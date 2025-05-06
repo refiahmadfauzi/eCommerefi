@@ -227,40 +227,48 @@
                     return Math.ceil(this.total / this.limit);
                 },
                 totalPrice() {
-                    return this.products.reduce((sum, item) => {
+                    var total = this.products.reduce((sum, item) => {
                         return sum + (item.Product.price * item.product_qty);
                     }, 0);
+                    return jml = total + this.shipping_price
                 }
             },
             methods: {
-                fetchProducts() {
+                async fetchProducts() {
                     this.loading = true;
-                    fetch(`${this.baseUrl}/carts?seacrh=${this.user.id}page=${this.page}&limit=${this.limit}`)
-                        .then(res => res.json())
-                        .then(response => {
-                            this.products = response.data;
-                            console.log(this.products);
+                    await axios.get(`${this.baseUrl}/carts`, {
+                        params: {
+                            users_id: this.user_id,
+                            page: 1,
+                            limit: 100
+                        }
+                    })
+                    .then(response => {
+                        const data = response.data;
+                        this.products = data.data;
 
-                            this.total = response.total;
-                            this.loading = false;
+                        this.total = data.total;
+                        this.loading = false;
 
-                            const name = sessionStorage.getItem('name');
-                            const id = sessionStorage.getItem('user_id');
-                            const email = sessionStorage.getItem('email');
-                            if (name) {
-                                this.user.id = id
-                                this.user.name = name
-                                this.user.email = email
-                            }
-                            this.shipping_price = Math.floor(this.totalPrice *
-                                0.10); // 10% dari total_price dibulatkan ke bawah
+                        const name = sessionStorage.getItem('name');
+                        const id = sessionStorage.getItem('user_id');
+                        const email = sessionStorage.getItem('email');
 
-                        })
-                        .catch(error => {
-                            console.error('Gagal mengambil produk:', error);
-                            this.loading = false;
-                        });
+                        if (name) {
+                            this.user.id = id;
+                            this.user.name = name;
+                            this.user.email = email;
+                        }
+
+                        this.shipping_price = Math.floor(this.totalPrice * 0.10); // 10% dari total_price dibulatkan ke bawah
+                        
+                    })
+                    .catch(error => {
+                        console.error('Gagal mengambil produk:', error);
+                        this.loading = false;
+                    });
                 },
+
                 formatPrice(price) {
                     return 'Rp. ' + Number(price).toLocaleString('id-ID', {
                         minimumFractionDigits: 0,
@@ -304,8 +312,9 @@
                 },
                 async fetchPayments() {
                     try {
-                        const response = await axios.get(`${this.baseUrl}/payments`);
-                        this.payments = response.data.data;
+                        const response = await axios.get(`${this.baseUrl}/payments/user/${this.user_id}`);
+                        
+                        this.payments = response.data;
                     } catch (error) {
                         console.error(error);
                     }
@@ -379,8 +388,19 @@
 
             },
             mounted() {
-                this.fetchProducts();
-                this.fetchPayments();
+                var token = sessionStorage.getItem('token');
+                var user_id= sessionStorage.getItem('user_id');
+                console.log(token);
+                this.user_id = user_id;
+                console.log(this.user_id);
+                
+                if (!token) {
+                    alert('Your are not login!');
+                    window.location.href = 'login.html'; // arahkan ke halaman login jika ada
+                }else{
+                    this.fetchProducts();
+                    this.fetchPayments();
+                }
 
             }
         }).mount('#app');

@@ -81,19 +81,23 @@ exports.getPayment = async (req, res) => {
 };
 
 // GET /api/CardUser/:id
-exports.getPaymentById = async (req, res) => {
-  const {
-    id
-  } = req.params;
+exports.getPaymentByUserId = async (req, res) => {
+  const { id } = req.params; // ini adalah users_id
 
   try {
-    const Payment = await CardUser.findByPk(id);
-
-    if (!Payment) return res.status(404).json({
-      message: 'Payment not found'
+    const payments = await CardUser.findAll({
+      where: {
+        users_id: id
+      }
     });
 
-    res.json(Payment);
+    if (payments.length === 0) {
+      return res.status(404).json({
+        message: 'No payments found for this user'
+      });
+    }
+
+    res.json(payments);
   } catch (err) {
     res.status(500).json({
       error: err.message

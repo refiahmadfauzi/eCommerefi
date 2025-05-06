@@ -64,33 +64,42 @@ exports.createCart = async (req, res) => {
 exports.getCart = async (req, res) => {
   const {
     search,
+    users_id,
     page = 1,
     limit = 10
   } = req.query;
   const offset = (page - 1) * limit;
 
   try {
-    const whereClause = search ?
-      {
-        [Op.or]: [{
-          users_id: {
-            [Op.like]: `%${search}%`
-          }
-        }, ]
-      } :
-      {};
+    // Bangun whereClause dengan kondisi users_id dan status_cart = 'show'
+    let whereClause = {
+      status_cart: 'show'
+    };
 
-    const {
-      count,
-      rows
-    } = await Cart.findAndCountAll({
+    if (users_id) {
+      whereClause.users_id = users_id;
+    }
+
+    if (search) {
+      whereClause = {
+        ...whereClause,
+        [Op.or]: [
+          {
+            users_id: {
+              [Op.like]: `%${search}%`
+            }
+          }
+        ]
+      };
+    }
+
+    const { count, rows } = await Cart.findAndCountAll({
       where: whereClause,
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [
-        ['created_at', 'DESC']
-      ],
-      include: [{
+      order: [['created_at', 'DESC']],
+      include: [
+        {
           model: Product,
           attributes: ['name', 'photo', 'price'],
         },
