@@ -165,6 +165,8 @@
                         <div class="col-sm-6">
                             <h4>Receipt: <span class="badge bg-dark">{{ order.recipt }}</span></h4>
                             <p>Status: <strong>{{ order.status_shipping }}</strong></p>
+                            <p>Card: {{ order.card.name_users }} - {{ order.card.card_number }}
+                                ({{ order.card.bank_name }})</p>
                             <p>Date Order: {{ formatDate(order.date_order) }}</p>
                             <p>Total Price: <b> {{ formatPrice(order.total_price) }}</b></p>
                         </div>
@@ -298,16 +300,26 @@
                 };
             },
             mounted() {
-                this.userId = sessionStorage.getItem('user_id');
-                axios.get(`http://localhost:5000/api/users/${this.userId}`)
-                    .then(res => {
-                        this.user = res.data;
-                    })
-                    .catch(err => {
-                        console.error('Error fetching user:', err);
-                    });
-                this.fetchOrders();
-                this.fetchCards();
+                var token = sessionStorage.getItem('token');
+                var user_id = sessionStorage.getItem('user_id');
+
+                this.userId = user_id;
+
+                if (!token) {
+                    alert('Your are not login!');
+                    window.location.href = 'login.html'; // arahkan ke halaman login jika ada
+                } else {
+                    this.userId = sessionStorage.getItem('user_id');
+                    axios.get(`http://localhost:5000/api/users/${this.userId}`)
+                        .then(res => {
+                            this.user = res.data;
+                        })
+                        .catch(err => {
+                            console.error('Error fetching user:', err);
+                        });
+                    this.fetchOrders();
+                    this.fetchCards();
+                }
             },
             methods: {
                 formatDate(dateStr) {
@@ -357,8 +369,6 @@
                         const res = await axios.get(
                             `http://localhost:5000/api/orders/${this.userId}?page=${this.page}&limit=${this.limit}`
                         );
-                        console.log(res.data);
-
                         this.orders = res.data.data;
                         this.totalPages = res.data.totalPages;
                     } catch (err) {
@@ -445,7 +455,15 @@
                     // Misal menggunakan localStorage untuk token/login info
                     sessionStorage.removeItem('token');
                     sessionStorage.removeItem('user_id');
-                    location.reload(); // atau trigger reload state agar user null
+                    sessionStorage.removeItem('name');
+                    Swal.fire({
+                        title: "Loggout",
+                        text: 'Berhasil loggout',
+                        icon: "success"
+                    });
+                    setTimeout(function () {
+                        window.location.href = 'index.html'
+                    }, 2000);
                 },
                 async updateShippingStatus(invoiceId) {
                     Swal.fire({

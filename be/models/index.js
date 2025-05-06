@@ -75,6 +75,7 @@ db.Invoice.hasMany(db.HistoryOrder, {
 db.HistoryOrder.belongsTo(db.Invoice, {
     foreignKey: 'invoice_id'
 });
+
 db.Invoice.belongsTo(db.Users, {
     as: 'user',
     foreignKey: 'users_id'
@@ -82,6 +83,15 @@ db.Invoice.belongsTo(db.Users, {
 db.Users.hasMany(db.Invoice, {
     as: 'invoices',
     foreignKey: 'users_id'
+});
+
+db.Invoice.belongsTo(db.CardUser, {
+    as: 'card',
+    foreignKey: 'id_card'
+});
+db.CardUser.hasMany(db.Invoice, {
+    as: 'invoices',
+    foreignKey: 'id'
 });
 
 

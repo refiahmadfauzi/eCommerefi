@@ -203,8 +203,8 @@
                             icon: "warning"
                         });
                         setTimeout(function () {
-                                window.location.href = 'login.html';
-                            }, 2000);
+                            window.location.href = 'login.html';
+                        }, 2000);
                         return;
                     }
                     if (!this.selectedSizeId) {
@@ -243,7 +243,15 @@
                     // Misal menggunakan localStorage untuk token/login info
                     sessionStorage.removeItem('token');
                     sessionStorage.removeItem('user_id');
-                    location.reload(); // atau trigger reload state agar user null
+                    sessionStorage.removeItem('name');
+                    Swal.fire({
+                        title: "Loggout",
+                        text: 'Berhasil loggout',
+                        icon: "success"
+                    });
+                    setTimeout(function () {
+                        window.location.href = 'index.html'
+                    }, 2000);
                 }
 
             },

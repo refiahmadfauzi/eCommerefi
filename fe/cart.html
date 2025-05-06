@@ -237,36 +237,37 @@
                 async fetchProducts() {
                     this.loading = true;
                     await axios.get(`${this.baseUrl}/carts`, {
-                        params: {
-                            users_id: this.user_id,
-                            page: 1,
-                            limit: 100
-                        }
-                    })
-                    .then(response => {
-                        const data = response.data;
-                        this.products = data.data;
+                            params: {
+                                users_id: this.user_id,
+                                page: 1,
+                                limit: 100
+                            }
+                        })
+                        .then(response => {
+                            const data = response.data;
+                            this.products = data.data;
 
-                        this.total = data.total;
-                        this.loading = false;
+                            this.total = data.total;
+                            this.loading = false;
 
-                        const name = sessionStorage.getItem('name');
-                        const id = sessionStorage.getItem('user_id');
-                        const email = sessionStorage.getItem('email');
+                            const name = sessionStorage.getItem('name');
+                            const id = sessionStorage.getItem('user_id');
+                            const email = sessionStorage.getItem('email');
 
-                        if (name) {
-                            this.user.id = id;
-                            this.user.name = name;
-                            this.user.email = email;
-                        }
+                            if (name) {
+                                this.user.id = id;
+                                this.user.name = name;
+                                this.user.email = email;
+                            }
 
-                        this.shipping_price = Math.floor(this.totalPrice * 0.10); // 10% dari total_price dibulatkan ke bawah
-                        
-                    })
-                    .catch(error => {
-                        console.error('Gagal mengambil produk:', error);
-                        this.loading = false;
-                    });
+                            this.shipping_price = Math.floor(this.totalPrice *
+                            0.10); // 10% dari total_price dibulatkan ke bawah
+
+                        })
+                        .catch(error => {
+                            console.error('Gagal mengambil produk:', error);
+                            this.loading = false;
+                        });
                 },
 
                 formatPrice(price) {
@@ -313,7 +314,7 @@
                 async fetchPayments() {
                     try {
                         const response = await axios.get(`${this.baseUrl}/payments/user/${this.user_id}`);
-                        
+
                         this.payments = response.data;
                     } catch (error) {
                         console.error(error);
@@ -342,6 +343,14 @@
                 },
 
                 async checkout() {
+                    if (!this.selectedPayment) {
+                        Swal.fire({
+                            title: "Warning!",
+                            text: 'Pilih payment terlebih dahulu!',
+                            icon: "warning"
+                        });
+                        return
+                    }
                     try {
                         const orders = this.products.map(p => ({
                             cart_id: p.id,
@@ -362,6 +371,7 @@
                             date_order: new Date().toISOString().split('T')[0],
                             total_price: this.totalPrice,
                             users_id: parseInt(this.user.id),
+                            id_card: parseInt(this.selectedPayment),
                             orders
                         };
 
@@ -383,21 +393,22 @@
                     // Misal menggunakan localStorage untuk token/login info
                     sessionStorage.removeItem('token');
                     sessionStorage.removeItem('user_id');
+                    sessionStorage.removeItem('name');
                     location.reload(); // atau trigger reload state agar user null
                 }
 
             },
             mounted() {
                 var token = sessionStorage.getItem('token');
-                var user_id= sessionStorage.getItem('user_id');
+                var user_id = sessionStorage.getItem('user_id');
                 console.log(token);
                 this.user_id = user_id;
                 console.log(this.user_id);
-                
+
                 if (!token) {
                     alert('Your are not login!');
                     window.location.href = 'login.html'; // arahkan ke halaman login jika ada
-                }else{
+                } else {
                     this.fetchProducts();
                     this.fetchPayments();
                 }

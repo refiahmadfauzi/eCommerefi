@@ -18,7 +18,8 @@ exports.createInvoice = async (req, res) => {
       date_order,
       total_price,
       orders,
-      users_id
+      users_id,
+      id_card
     } = req.body;
 
     const firstOrder = orders[0];
@@ -34,6 +35,7 @@ exports.createInvoice = async (req, res) => {
       date_order,
       total_price,
       users_id,
+      id_card,
       created_at: new Date()
     });
 
@@ -153,40 +155,6 @@ exports.getInvoiceById = async (req, res) => {
   }
 };
 
-exports.updateInvoice = async (req, res) => {
-  try {
-    const InvoiceId = req.params.id;
-    const {
-      nama_user,
-      card_number,
-      bank_name,
-      expired_card
-    } = req.body;
-
-    const Invoice = await Invoice.findByPk(InvoiceId);
-    if (!Invoice) {
-      return res.status(404).json({
-        message: 'Invoice not found'
-      });
-    }
-
-    await Invoice.update({
-      nama_user,
-      card_number,
-      bank_name,
-      expired_card,
-    });
-
-    res.status(200).json({
-      message: 'Invoice updated successfully',
-      Invoice
-    });
-  } catch (err) {
-    res.status(500).json({
-      error: err.message
-    });
-  }
-};
 
 exports.deleteInvoice = async (req, res) => {
   try {

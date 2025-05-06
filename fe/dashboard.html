@@ -482,6 +482,10 @@
               <label><b>{{ selectedInvoice.user.name }} - {{ selectedInvoice.user.phone }}</b></label>
               <br>
               <label>{{ selectedInvoice.user.address }}</label>
+              <hr>
+              <h4>Payment</h4>
+              <label>A.N {{ selectedInvoice.card.name_users }} - {{ selectedInvoice.card.card_number }}
+                ({{ selectedInvoice.card.bank_name }})</label>
             </div>
             <div class="modal-footer">
               <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -551,7 +555,8 @@
           selectedInvoice: {
             recipt: '',
             orders: [],
-            user: {}
+            user: {},
+            card: {}
           }
         };
       },
@@ -852,8 +857,8 @@
             icon: "success"
           });
           setTimeout(function () {
-                window.location.href = 'loginadmin.html'; // arahkan ke halaman login jika ada
-              }, 2000);
+            window.location.href = 'loginadmin.html'; // arahkan ke halaman login jika ada
+          }, 2000);
         },
 
 
@@ -889,6 +894,8 @@
         },
         showDetails(invoice) {
           this.selectedInvoice = invoice;
+          console.log(this.selectedInvoice);
+
           const modal = new bootstrap.Modal(this.$refs.productModal);
           modal.show();
         },

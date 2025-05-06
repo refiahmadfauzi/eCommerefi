@@ -2,7 +2,8 @@
 const {
   Invoice,
   HistoryOrder,
-  Users
+  Users,
+  CardUser
 } = require('../models');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
@@ -35,7 +36,12 @@ exports.getOrdersByUser = async (req, res) => {
         {
           model: Users,
           as: 'user',
+        },
+        {
+          model: CardUser,
+          as: 'card',
         }
+
       ],
       distinct: true, // pastikan count hanya menghitung invoice
       order: [
@@ -96,6 +102,11 @@ exports.getOrders = async (req, res) => {
           model: Users,
           as: 'user',
           attributes: ['id', 'name', 'phone', 'address'] // sesuaikan field yang dibutuhkan
+        },
+        {
+          model: CardUser,
+          as: 'card',
+          attributes: ['name_users', 'card_number', 'bank_name'] // sesuaikan field yang dibutuhkan
         }
       ],
       order: [
@@ -221,12 +232,12 @@ exports.downloadInvoicePDF = async (req, res) => {
     });
 
     doc.moveTo(50, positionY).lineTo(550, positionY).stroke();
-    var jml = invoice.total_price + invoice.shipping_price;
+    // var jml = invoice.total_price + invoice.shipping_price;
     // Total
     doc.font('Helvetica-Bold');
     doc.text(`Subtotal: Rp ${totalHarga.toLocaleString()}`, 350, positionY + 10);
     doc.text(`Ongkir: Rp ${invoice.shipping_price.toLocaleString()}`, 350, positionY + 30);
-    doc.text(`Total: Rp ${jml.toLocaleString()}`, 350, positionY + 50);
+    doc.text(`Total: Rp ${invoice.total_price.toLocaleString()}`, 350, positionY + 50);
     doc.end();
 
   } catch (err) {

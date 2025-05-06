@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     date_order: DataTypes.DATE,
     total_price: DataTypes.INTEGER,
     users_id: DataTypes.INTEGER,
+    id_card: DataTypes.INTEGER,
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
