@@ -846,8 +846,14 @@
         logout() {
           // Contoh: hapus token & redirect
           sessionStorage.removeItem('token');
-          alert('Logged out!');
-          window.location.href = '/loginadmin.html'; // arahkan ke halaman login jika ada
+          Swal.fire({
+            title: "Logout!",
+            text: 'Berhasil logout',
+            icon: "success"
+          });
+          setTimeout(function () {
+                window.location.href = 'loginadmin.html'; // arahkan ke halaman login jika ada
+              }, 2000);
         },
 
 
