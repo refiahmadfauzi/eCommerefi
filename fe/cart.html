@@ -26,6 +26,7 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="profile.html">Profile</a></li>
+                        <li><a class="dropdown-item" href="cart.html">Cart</a></li>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
@@ -35,8 +36,10 @@
 
                 <div v-else>
                     <div class="ms-auto d-flex gap-2">
-                        <a href="login.html" class="btn btn-outline-primary btn-sm">Login</a>
-                        <a href="login.html" class="btn btn-primary btn-sm">Register</a>
+                        <button type="button" @click="login('login')"
+                            class="btn btn-outline-primary btn-sm">Login</button>
+                        <button type="button" @click="login('register')"
+                            class="btn btn-primary btn-sm">Register</button>
                     </div>
                 </div>
 
@@ -261,7 +264,7 @@
                             }
 
                             this.shipping_price = Math.floor(this.totalPrice *
-                            0.10); // 10% dari total_price dibulatkan ke bawah
+                                0.10); // 10% dari total_price dibulatkan ke bawah
 
                         })
                         .catch(error => {
@@ -395,6 +398,10 @@
                     sessionStorage.removeItem('user_id');
                     sessionStorage.removeItem('name');
                     location.reload(); // atau trigger reload state agar user null
+                },
+                login(action) {
+                    sessionStorage.setItem('action', action);
+                    window.location.href = 'login.html';
                 }
 
             },

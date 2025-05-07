@@ -36,8 +36,10 @@
 
                 <div v-else>
                     <div class="ms-auto d-flex gap-2">
-                        <a href="login.html" class="btn btn-outline-primary btn-sm">Login</a>
-                        <a href="login.html" class="btn btn-primary btn-sm">Register</a>
+                        <button type="button" @click="login('login')"
+                            class="btn btn-outline-primary btn-sm">Login</button>
+                        <button type="button" @click="login('register')"
+                            class="btn btn-primary btn-sm">Register</button>
                     </div>
                 </div>
 
@@ -252,6 +254,10 @@
                     setTimeout(function () {
                         window.location.href = 'index.html'
                     }, 2000);
+                },
+                login(action) {
+                    sessionStorage.setItem('action', action);
+                    window.location.href = 'login.html';
                 }
 
             },
