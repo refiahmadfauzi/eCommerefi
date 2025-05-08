@@ -75,16 +75,16 @@
                                         <small class="text-danger">Size: {{ data.ProductSize.product_size }}</small>
                                     </div>
                                     <div class="col">
-                                        <a href="#" @click.prevent="decreaseQty(data)">-</a>
+                                        <button type="button" class="btn" @click.prevent="decreaseQty(data)">-</button>
                                         <a href="#" class="border">{{ data.product_qty }}</a>
-                                        <a href="#" @click.prevent="increaseQty(data)">+</a>
+                                        <button type="button" class="btn" @click.prevent="increaseQty(data)" :disabled="data.product_qty >= data.ProductSize.product_qty">+</button>
                                     </div>
                                     <div class="col">{{ formatPrice(data.Product.price) }}</div>
                                 </div>
                             </div>
 
-                            <div class="back-to-shop"><a href="/">&leftarrow;</a><span class="text-muted">Back to
-                                    shop</span></div>
+                            <div class="back-to-shop"><a href="index.html">&leftarrow;<span class="text-muted">Back to
+                                    shop</span></a></div>
                         </div>
                         <div class="col-md-4 summary">
                             <div>
@@ -249,7 +249,8 @@
                         .then(response => {
                             const data = response.data;
                             this.products = data.data;
-
+                            console.log(data);
+                            
                             this.total = data.total;
                             this.loading = false;
 
@@ -302,14 +303,25 @@
                     if (item.product_qty > 1) {
                         item.product_qty--;
                         this.updateCart(item);
+                    }else{
+                        this.deleteCart(item);
                     }
                 },
-                updateCart(item) {
+                async updateCart(item) {
                     // Kirim update ke API jika perlu
-                    axios.put(`${this.baseUrl}/carts/${item.id}`, {
+                    await axios.put(`${this.baseUrl}/carts/${item.id}`, {
                         product_qty: item.product_qty
                     }).then(res => {
                         console.log('Cart updated');
+                    }).catch(err => {
+                        console.error('Update failed:', err);
+                    });
+                },
+                async deleteCart(item) {
+                    // Kirim update ke API jika perlu
+                    await axios.delete(`${this.baseUrl}/carts/${item.id}`).then(res => {
+                        console.log('Cart Deleted');
+                        this.fetchProducts()
                     }).catch(err => {
                         console.error('Update failed:', err);
                     });

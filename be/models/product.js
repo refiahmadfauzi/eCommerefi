@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.TEXT,
     photo: DataTypes.STRING,
     price: DataTypes.FLOAT,
+    is_deleted: DataTypes.INTEGER,
     created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
   }, {
     tableName: 'product',

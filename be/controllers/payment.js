@@ -22,6 +22,7 @@ exports.createPayment = async (req, res) => {
       bank_name,
       expired_card,
       users_id,
+      is_deleted: null,
       created_at: new Date()
     });
 
@@ -47,13 +48,20 @@ exports.getPayment = async (req, res) => {
   const offset = (page - 1) * limit;
 
   try {
-    const whereClause = search ? {
+    const baseCondition = { is_deleted: null }; // hanya user aktif
+    const searchCondition = search ? {
       [Op.or]: [{
         users_id: {
           [Op.like]: `%${search}%`
         }
       }, ]
     } : {};
+
+    const whereClause = {
+      ...baseCondition,
+      ...searchCondition,
+    };
+
 
     const {
       count,
@@ -151,7 +159,8 @@ exports.deletePayment = async (req, res) => {
       });
     }
 
-    await Payment.destroy();
+    // await Payment.destroy();
+    await Payment.update({ is_deleted: 1 })
 
     res.status(200).json({
       message: 'Payment deleted successfully'

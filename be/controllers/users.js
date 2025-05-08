@@ -32,7 +32,9 @@ exports.getUsers = async (req, res) => {
   const offset = (page - 1) * limit;
 
   try {
-    const whereClause = search
+    const baseCondition = { is_active: 1 }; // hanya user aktif
+
+    const searchCondition = search
       ? {
           [Op.or]: [
             { name: { [Op.like]: `%${search}%` } },
@@ -40,6 +42,11 @@ exports.getUsers = async (req, res) => {
           ]
         }
       : {};
+
+    const whereClause = {
+      ...baseCondition,
+      ...searchCondition,
+    };
 
     const { count, rows } = await Users.findAndCountAll({
       where: whereClause,
@@ -59,6 +66,7 @@ exports.getUsers = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // GET /api/users/:id
 exports.getUserById = async (req, res) => {
@@ -119,9 +127,10 @@ exports.deleteUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    await user.destroy();
+    // Soft delete by updating is_active to 2
+    await user.update({ is_active: 2 });
 
-    res.status(200).json({ message: 'User deleted successfully' });
+    res.status(200).json({ message: 'User soft deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

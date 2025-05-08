@@ -105,7 +105,7 @@ exports.getCart = async (req, res) => {
         },
         {
           model: ProductSize,
-          attributes: ['product_size'],
+          attributes: ['product_size','product_qty'],
         }
       ]
     });

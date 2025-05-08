@@ -9,7 +9,9 @@ exports.getProducts = async (req, res) => {
     const offset = (page - 1) * limit;
   
     try {
-      const whereClause = search
+      const baseCondition = { is_deleted: null }; // hanya user aktif
+
+      const searchCondition = search
         ? {
             [Op.or]: [
               { name: { [Op.like]: `%${search}%` } },
@@ -17,6 +19,11 @@ exports.getProducts = async (req, res) => {
           }
         : {};
   
+      const whereClause = {
+        ...baseCondition,
+        ...searchCondition,
+      };
+
       const { count, rows } = await Product.findAndCountAll({
         where: whereClause,
         limit: parseInt(limit),
@@ -45,6 +52,7 @@ exports.createProduct = async (req, res) => {
       description,
       photo,
       price,
+      is_deleted: null,
       created_at: new Date()
     });
 
@@ -113,7 +121,9 @@ exports.deleteProduct = async (req, res) => {
     }
 
     // Hapus dari database
-    await product.destroy();
+    // await product.destroy();
+    // Soft delete by updating is_active to 2
+    await product.update({ is_deleted: 1 });
 
     res.status(200).json({ message: 'Product deleted successfully' });
   } catch (err) {
