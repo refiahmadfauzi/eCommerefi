@@ -322,6 +322,7 @@
                         });
                     this.fetchOrders();
                     this.fetchCards();
+                    this.fetchUser()
                 }
             },
             methods: {
@@ -348,6 +349,7 @@
                     modal.show();
                 },
                 saveProfile() {
+                    this.fetchUser();
                     axios.put(`http://localhost:5000/api/users/${this.userId}`, this.form)
                         .then(() => {
                             this.user = {
@@ -405,6 +407,7 @@
                     return cardNumber.slice(-4);
                 },
                 async submitPayment() {
+                    this.fetchUser();
                     this.form.users_id = sessionStorage.getItem('user_id');
                     try {
                         const response = await axios.post(`${this.baseUrl}/payments`, this.form);
@@ -427,6 +430,7 @@
                     }
                 },
                 deleteCard(card) {
+                    this.fetchUser();
                     Swal.fire({
                         title: "Apakah anda yakin?",
                         text: "Yakin ingin menghapus payment ini?",
@@ -469,6 +473,7 @@
                     }, 2000);
                 },
                 async updateShippingStatus(invoiceId) {
+                    this.fetchUser();
                     Swal.fire({
                         title: "Apakah anda yakin?",
                         text: "Ubah status pengiriman, tidak bisa dikembalikan!",
@@ -503,7 +508,29 @@
                 login(action) {
                     sessionStorage.setItem('action', action);
                     window.location.href = 'login.html';
-                }
+                },
+                async fetchUser() {
+                    var user_id = sessionStorage.getItem('user_id');
+                    await axios.get(`${this.baseUrl}/users/${user_id}`)
+                        .then(response => {
+                            const data = response.data;
+                            if (data.is_active == 2) {
+                                Swal.fire({
+                                    title: "Oppss!",
+                                    text: 'Akun ada tidak aktif!',
+                                    icon: "error"
+                                });
+                                setTimeout(function () {
+                                    window.location.href = 'login.html';
+                                }, 2000);
+                            }
+
+                        })
+                        .catch(error => {
+                            console.error('Gagal mengambil produk:', error);
+                            this.loading = false;
+                        });
+                },
 
 
             }

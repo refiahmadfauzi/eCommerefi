@@ -95,7 +95,8 @@ exports.getPaymentByUserId = async (req, res) => {
   try {
     const payments = await CardUser.findAll({
       where: {
-        users_id: id
+        users_id: id,
+        is_deleted: null
       }
     });
 

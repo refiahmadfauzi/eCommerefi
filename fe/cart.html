@@ -308,6 +308,7 @@
                     }
                 },
                 async updateCart(item) {
+                    this.fetchUser();
                     // Kirim update ke API jika perlu
                     await axios.put(`${this.baseUrl}/carts/${item.id}`, {
                         product_qty: item.product_qty
@@ -318,6 +319,7 @@
                     });
                 },
                 async deleteCart(item) {
+                    this.fetchUser();
                     // Kirim update ke API jika perlu
                     await axios.delete(`${this.baseUrl}/carts/${item.id}`).then(res => {
                         console.log('Cart Deleted');
@@ -336,6 +338,7 @@
                     }
                 },
                 async submitPayment() {
+                    this.fetchUser();
                     this.form.users_id = sessionStorage.getItem('user_id');
                     try {
                         const response = await axios.post(`${this.baseUrl}/payments`, this.form);
@@ -358,6 +361,7 @@
                 },
 
                 async checkout() {
+                    this.fetchUser();
                     if (!this.selectedPayment) {
                         Swal.fire({
                             title: "Warning!",
@@ -414,7 +418,30 @@
                 login(action) {
                     sessionStorage.setItem('action', action);
                     window.location.href = 'login.html';
-                }
+                },
+                async fetchUser() {
+                    var user_id = sessionStorage.getItem('user_id');
+                    await axios.get(`${this.baseUrl}/users/${user_id}`)
+                        .then(response => {
+                            const data = response.data;
+                            if (data.is_active == 2) {
+                                Swal.fire({
+                                    title: "Oppss!",
+                                    text: 'Akun ada tidak aktif!',
+                                    icon: "error"
+                                });
+                                setTimeout(function () {
+                                    window.location.href = 'login.html';
+                                }, 2000);
+                            }
+
+                        })
+                        .catch(error => {
+                            console.error('Gagal mengambil produk:', error);
+                            this.loading = false;
+                        });
+                },
+
 
             },
             mounted() {
@@ -428,6 +455,7 @@
                     alert('Your are not login!');
                     window.location.href = 'login.html'; // arahkan ke halaman login jika ada
                 } else {
+                    this.fetchUser();
                     this.fetchProducts();
                     this.fetchPayments();
                 }

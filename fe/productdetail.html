@@ -206,6 +206,7 @@
                     });
                 },
                 addCart() {
+                    this.fetchUser();
                     this.userId = sessionStorage.getItem('user_id');
                     if (!this.userId) {
                         Swal.fire({
@@ -276,11 +277,34 @@
                     } else {
                         this.quantityError = '';
                     }
-                }
+                },
+                async fetchUser() {
+                    var user_id = sessionStorage.getItem('user_id');
+                    await axios.get(`${this.baseUrl}/users/${user_id}`)
+                        .then(response => {
+                            const data = response.data;
+                            if (data.is_active == 2) {
+                                Swal.fire({
+                                    title: "Oppss!",
+                                    text: 'Akun ada tidak aktif!',
+                                    icon: "error"
+                                });
+                                setTimeout(function () {
+                                    window.location.href = 'login.html';
+                                }, 2000);
+                            }
+
+                        })
+                        .catch(error => {
+                            console.error('Gagal mengambil produk:', error);
+                            this.loading = false;
+                        });
+                },
 
             },
             mounted() {
                 this.fetchProducts();
+                this.fetchUser();
             }
         }).mount('#app');
     </script>
