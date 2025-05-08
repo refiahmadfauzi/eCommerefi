@@ -206,7 +206,11 @@
           axios.post('http://localhost:5000/api/register', this.registerForm)
             .then(response => {
               console.log(response.data);
-              alert('Register successful!');
+              Swal.fire({
+                title: "Success!",
+                text: 'Berhasil registrasi,Silahkan login!',
+                icon: "success"
+              });
               this.currentPage = 'login'; // jika ingin redirect ke login setelah register
             })
             .catch(error => {
