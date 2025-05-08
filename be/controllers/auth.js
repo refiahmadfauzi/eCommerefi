@@ -6,11 +6,12 @@ exports.loginUser = async (req, res) => {
   const { email, password } = req.body;
   
   try {
-    const user = await Users.findOne({ where: { email } });
+    // Tambahkan kondisi is_active: 1
+    const user = await Users.findOne({ where: { email, is_active: 1 } });
     console.log(user);
 
     if (!user) {
-      return res.status(401).json({ message: 'Email tidak ditemukan.' });
+      return res.status(401).json({ message: 'Email tidak ditemukan atau akun tidak aktif.' });
     }
 
     const match = await bcrypt.compare(password, user.password);
@@ -31,11 +32,11 @@ exports.loginUser = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error); // log ke terminal
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
-  
 };
+
 
 exports.loginAdmin = async (req, res) => {
   const { username, password } = req.body;

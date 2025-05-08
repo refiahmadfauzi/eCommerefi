@@ -192,6 +192,11 @@
               sessionStorage.setItem('email', response.data.user.email);
             })
             .catch(error => {
+              Swal.fire({
+                title: "Oppss!",
+                text: error.response.data.message,
+                icon: "error"
+              });
               console.error('Login error:', error.response.data || error.message);
               this.error = error.response.data.message || 'Login gagal. Coba lagi.';
             });
